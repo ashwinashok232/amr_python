@@ -1,0 +1,84 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="amr">
+
+  <!-- Parameters -->
+  <xacro:property name="base_length" value="0.35"/>
+  <xacro:property name="base_width"  value="0.28"/>
+  <xacro:property name="base_height" value="0.10"/>
+
+  <xacro:property name="wheel_radius" value="0.05"/>
+  <xacro:property name="wheel_width"  value="0.03"/>
+  <xacro:property name="wheel_sep"    value="0.24"/> <!-- center-to-center -->
+
+  <!-- Materials -->
+  <material name="gray"><color rgba="0.6 0.6 0.6 1.0"/></material>
+  <material name="black"><color rgba="0.1 0.1 0.1 1.0"/></material>
+
+  <!-- Base link -->
+<link name="base_link">
+  <visual>
+    <origin xyz="0 0 ${base_height/2 + wheel_radius}" rpy="0 0 0"/>
+    <geometry>
+      <box size="${base_length} ${base_width} ${base_height}"/>
+    </geometry>
+    <material name="gray"/>
+  </visual>
+  <collision>
+    <origin xyz="0 0 ${base_height/2 + wheel_radius}" rpy="0 0 0"/>
+    <geometry>
+      <box size="${base_length} ${base_width} ${base_height}"/>
+    </geometry>
+  </collision>
+  <inertial>
+    <origin xyz="0 0 ${base_height/2 + wheel_radius}" rpy="0 0 0"/>
+    <mass value="8.0"/>
+    <inertia ixx="0.12" ixy="0.0" ixz="0.0" iyy="0.20" iyz="0.0" izz="0.25"/>
+  </inertial>
+</link>
+
+
+  <!-- Wheels -->
+  <link name="left_wheel_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <geometry>
+        <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+  </link>
+
+  <link name="right_wheel_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <geometry>
+        <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+  </link>
+
+  <!-- Wheel joints -->
+  <joint name="left_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="left_wheel_link"/>
+    <origin xyz="0 ${wheel_sep/2} ${wheel_radius}" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+  </joint>
+
+  <joint name="right_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="right_wheel_link"/>
+    <origin xyz="0 -${wheel_sep/2} ${wheel_radius}" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+  </joint>
+
+  <!-- A forward-facing lidar frame placeholder (sensor added later) -->
+  <link name="lidar_link"/>
+  <joint name="lidar_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="lidar_link"/>
+    <origin xyz="${base_length/2 - 0.05} 0 ${base_height + 0.02}" rpy="0 0 0"/>
+  </joint>
+
+</robot>
