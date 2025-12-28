@@ -8,36 +8,37 @@
 
   <xacro:property name="wheel_radius" value="0.05"/>
   <xacro:property name="wheel_width"  value="0.03"/>
-  <xacro:property name="wheel_sep"    value="0.24"/> <!-- center-to-center -->
+  <xacro:property name="wheel_y" value="${base_width/2 + wheel_width/2}"/>
+  <xacro:property name="wheel_sep" value="${2*wheel_y}"/>
+
 
   <!-- Materials -->
   <material name="gray"><color rgba="0.6 0.6 0.6 1.0"/></material>
   <material name="black"><color rgba="0.1 0.1 0.1 1.0"/></material>
 
   <!-- Base link -->
-<link name="base_link">
-  <visual>
-    <origin xyz="0 0 ${base_height/2 + wheel_radius}" rpy="0 0 0"/>
-    <geometry>
-      <box size="${base_length} ${base_width} ${base_height}"/>
-    </geometry>
-    <material name="gray"/>
-  </visual>
-  <collision>
-    <origin xyz="0 0 ${base_height/2 + wheel_radius}" rpy="0 0 0"/>
-    <geometry>
-      <box size="${base_length} ${base_width} ${base_height}"/>
-    </geometry>
-  </collision>
-  <inertial>
-    <origin xyz="0 0 ${base_height/2 + wheel_radius}" rpy="0 0 0"/>
-    <mass value="8.0"/>
-    <inertia ixx="0.12" ixy="0.0" ixz="0.0" iyy="0.20" iyz="0.0" izz="0.25"/>
-  </inertial>
-</link>
+  <link name="base_link">
+    <visual>
+      <origin xyz="0 0 ${base_height/2 + wheel_radius}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${base_length} ${base_width} ${base_height}"/>
+      </geometry>
+      <material name="gray"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${base_height/2 + wheel_radius}" rpy="0 0 0"/>
+      <geometry>
+        <box size="${base_length} ${base_width} ${base_height}"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 ${base_height/2 + wheel_radius}" rpy="0 0 0"/>
+      <mass value="8.0"/>
+      <inertia ixx="0.12" ixy="0.0" ixz="0.0" iyy="0.20" iyz="0.0" izz="0.25"/>
+    </inertial>
+  </link>
 
-
-  <!-- Wheels -->
+  <!-- Wheels (UPDATED: add collision + inertial) -->
   <link name="left_wheel_link">
     <visual>
       <origin xyz="0 0 0" rpy="1.5708 0 0"/>
@@ -46,6 +47,20 @@
       </geometry>
       <material name="black"/>
     </visual>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <geometry>
+        <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.5"/>
+      <!-- placeholder inertia; good enough for M2 -->
+      <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
+    </inertial>
   </link>
 
   <link name="right_wheel_link">
@@ -56,29 +71,93 @@
       </geometry>
       <material name="black"/>
     </visual>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+      <geometry>
+        <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.5"/>
+      <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
+    </inertial>
   </link>
 
   <!-- Wheel joints -->
   <joint name="left_wheel_joint" type="continuous">
     <parent link="base_link"/>
     <child link="left_wheel_link"/>
-    <origin xyz="0 ${wheel_sep/2} ${wheel_radius}" rpy="0 0 0"/>
+    <origin xyz="0 ${wheel_y} ${wheel_radius}" rpy="0 0 0"/>
     <axis xyz="0 1 0"/>
   </joint>
 
   <joint name="right_wheel_joint" type="continuous">
     <parent link="base_link"/>
     <child link="right_wheel_link"/>
-    <origin xyz="0 -${wheel_sep/2} ${wheel_radius}" rpy="0 0 0"/>
+    <origin xyz="0 -${wheel_y} ${wheel_radius}" rpy="0 0 0"/>
     <axis xyz="0 1 0"/>
   </joint>
 
-  <!-- A forward-facing lidar frame placeholder (sensor added later) -->
-  <link name="lidar_link"/>
+  <!-- Lidar frame placeholder (UPDATED: give inertial so Gazebo doesn't complain) -->
+  <link name="lidar_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.1"/>
+      <inertia ixx="1e-5" ixy="0.0" ixz="0.0" iyy="1e-5" iyz="0.0" izz="1e-5"/>
+    </inertial>
+  </link>
+
   <joint name="lidar_joint" type="fixed">
     <parent link="base_link"/>
     <child link="lidar_link"/>
     <origin xyz="${base_length/2 - 0.05} 0 ${base_height + 0.02}" rpy="0 0 0"/>
   </joint>
+
+  <!-- ros2_control -->
+  <ros2_control name="MockSystem" type="system">
+    <hardware>
+      <plugin>mock_components/GenericSystem</plugin>
+    </hardware>
+
+    <joint name="left_wheel_joint">
+      <command_interface name="velocity"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+    <joint name="right_wheel_joint">
+      <command_interface name="velocity"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+  </ros2_control>
+
+  <!-- Gazebo plugin hook -->
+  <gazebo>
+    <!-- <plugin name="gazebo_ros2_control" filename="libgazebo_ros2_control.so"> -->
+
+      <!-- Where Gazebo should read the robot_description from -->
+      <robot_param>robot_description</robot_param>
+      <robot_param_node>/robot_state_publisher</robot_param_node>
+
+      <!-- Load controller params directly into the Gazebo controller manager -->
+      <parameters>$(find amr_control)/config/diff_drive_controller.yaml</parameters>
+
+    </plugin>
+  </gazebo>
+
+
+  <!-- OPTIONAL but recommended: wheel friction (reduces sliding in M2) -->
+  <gazebo reference="left_wheel_link">
+    <mu1>1.0</mu1>
+    <mu2>1.0</mu2>
+  </gazebo>
+  <gazebo reference="right_wheel_link">
+    <mu1>1.0</mu1>
+    <mu2>1.0</mu2>
+  </gazebo>
 
 </robot>
