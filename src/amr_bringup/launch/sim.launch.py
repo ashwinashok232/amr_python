@@ -43,16 +43,12 @@ def generate_launch_description():
     )
 
     # 3) Spawn robot into Gazebo
-    spawn_robot = TimerAction(
-        period=2.0,
-        actions=[
-            Node(
-                package='gazebo_ros',
-                executable='spawn_entity.py',
-                output='screen',
-                arguments=['-topic', 'robot_description', '-entity', 'amr']
-            )
-        ]
+    spawn_robot = Node(
+        package='gazebo_ros',
+        executable='spawn_entity.py',
+        output='screen',
+        arguments=['-topic', 'robot_description', 
+                   '-entity', 'amr'],
     )
 
     # 4) Spawn controllers AGAINST /gazebo_ros2_control
@@ -64,7 +60,7 @@ def generate_launch_description():
                 executable='spawner',
                 arguments=[
                     'joint_state_broadcaster',
-                    '--controller-manager', '/gazebo_ros2_control'
+                    '--controller-manager', '/controller_manager'
                 ],
                 output='screen'
             )
@@ -79,7 +75,7 @@ def generate_launch_description():
                 executable='spawner',
                 arguments=[
                     'diff_drive_controller',
-                    '--controller-manager', '/gazebo_ros2_control'
+                    '--controller-manager', '/controller_manager'
                 ],
                 output='screen'
             )
